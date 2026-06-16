@@ -32,7 +32,7 @@ CONTRACT_ACCOUNT = {
 }
 
 
-def generate_hmac_signature(access_key: str, secret_key: str, method: str, path: str, body: str = ""):
+def generate_hmac_signature(access_key: str, secret_key: str, path: str):
     """
     生成 HMAC 签名
     signMessage = <requestURI> + "|" + <timestamp>
@@ -47,12 +47,7 @@ def generate_hmac_signature(access_key: str, secret_key: str, method: str, path:
         hashlib.sha256
     ).hexdigest()
 
-    return {
-        "Decode-MM-Auth-Key": access_key,
-        "Decode-MM-Auth-Timestamp": timestamp,
-        "Decode-MM-Auth-Signature": signature,
-        "Content-Type": "application/json"
-    }
+    return timestamp, signature
 
 
 def mock_trade(account: dict, symbol_id: str, price: str, quantity: str, side: str, is_spot: bool = True):
@@ -60,6 +55,7 @@ def mock_trade(account: dict, symbol_id: str, price: str, quantity: str, side: s
     调用 Mock Trade 接口
     """
     path = "/api/v1/private/spot/mockTrade" if is_spot else "/api/v1/private/contract/mockTrade"
+    ts, sig = generate_hmac_signature(account["accessKey"], account["secretKey"], path)
 
     body = {
         "symbolId": symbol_id,
@@ -69,12 +65,22 @@ def mock_trade(account: dict, symbol_id: str, price: str, quantity: str, side: s
         "clientId": f"mm-{time.strftime('%Y%m%d')}-{int(time.time() * 1000) % 1000000}"
     }
 
-    headers = generate_hmac_signature(
-        account["accessKey"],
-        account["secretKey"],
-        "POST",
-        path,
-        json.dumps(body)
+    headers = {
+        "Content-Type": "application/json",
+        "Decode-MM-Auth-Access-Key": account["accessKey"],
+        "Decode-MM-Auth-Timestamp": ts,
+        "Decode-MM-Auth-Signature": sig,
+    }
+
+    # 打印 curl 命令
+    curl_cmd = (
+        f"curl -sS -X POST '{BASE_URL}{path}' "
+        f"-H 'Content-Type: application/json' "
+        f"-H 'Decode-MM-Auth-Access-Key: {account[\"accessKey\"]}' "
+        f"-H 'Decode-MM-Auth-Timestamp: {ts}' "
+        f"-H 'Decode-MM-Auth-Signature: {sig}' "
+        f"-d '{json.dumps(body)}' "
+        f"-k"
     )
 
     print(f"\n{'='*60}")
@@ -83,98 +89,55 @@ def mock_trade(account: dict, symbol_id: str, price: str, quantity: str, side: s
     print(f"Headers: {json.dumps({k: v for k, v in headers.items() if k != 'Content-Type'}, indent=2)}")
     print(f"Body: {json.dumps(body, indent=2)}")
     print("-" * 60)
+    print(f"\n[CURL 命令]:")
+    print(curl_cmd)
+    print("-" * 60)
 
     response = requests.post(
         f"{BASE_URL}{path}",
         headers=headers,
         json=body,
-        verify=False  # 内网证书
+        verify=False,  # 内网证书
+        timeout=10
     )
 
-    print(f"Status: {response.status_code}")
-    
-    # 增强错误处理：打印原始响应内容
+    print(f"\nStatus: {response.status_code}")
+
     try:
         response_data = response.json()
         print(f"Response: {json.dumps(response_data, indent=2, ensure_ascii=False)}")
         return response_data
     except json.JSONDecodeError:
-        # 如果不是JSON，打印原始文本
         print(f"Response (非JSON): {response.text}")
-        print(f"\n⚠️  错误分析:")
-        print(f"  - Status 401 通常表示认证失败")
-        print(f"  - 可能原因:")
-        print(f"    1. 时钟不同步 (需要NTP校时)")
-        print(f"    2. accessKey/secretKey 配置错误")
-        print(f"    3. 签名算法不匹配")
-        print(f"    4. 请求路径错误")
-        print(f"  - 当前时间戳: {int(time.time() * 1000)}")
         return {"error": "JSONDecodeError", "raw_text": response.text, "status_code": response.status_code}
 
 
 def main():
     """主函数"""
     print("=" * 60)
-    print("Mock Trade 做市对敲成交 Demo")
+    print("Mock Trade 做市对敲成交 - BCH/USDT")
     print("=" * 60)
     print(f"\n⚠️  必须使用 api.bifu.internal (做市商内网DNS)")
     print(f"⚠️  时钟同步: ±30s 窗口, 务必 NTP 校时")
     print(f"⚠️  限频: 10/s/账户")
 
-    # 检查时钟同步
     current_timestamp = int(time.time() * 1000)
     print(f"\n当前时间戳: {current_timestamp}")
     print(f"当前时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-    # ============ 现货测试 ============
-    print("\n\n" + "=" * 60)
-    print("【现货测试】BTC-USDT")
-    print("=" * 60)
-
+    # ============ 现货测试 BCH/USDT ============
     result = mock_trade(
         account=SPOT_ACCOUNT,
-        symbol_id="10000001",  # BTC-USDT
-        price="67000.5",
-        quantity="0.01",
+        symbol_id="90000013",
+        price="400",
+        quantity="0.100",
         side="BUY",
         is_spot=True
     )
 
-    # ============ 合约测试 ============
-    print("\n\n" + "=" * 60)
-    print("【合约测试】BTC-USDT 永续")
-    print("=" * 60)
-
-    result2 = mock_trade(
-        account=CONTRACT_ACCOUNT,
-        symbol_id="10000001",  # BTC-USDT 永续
-        price="67000.5",
-        quantity="0.01",
-        side="BUY",
-        is_spot=False
-    )
-
-    # ============ 价格保护测试 ============
-    print("\n\n" + "=" * 60)
-    print("【价格保护测试】故意传低价，看是否被钳制")
-    print("=" * 60)
-
-    result3 = mock_trade(
-        account=SPOT_ACCOUNT,
-        symbol_id="10000001",
-        price="67000",  # 低于买一，应被上修
-        quantity="0.01",
-        side="BUY",
-        is_spot=True
-    )
-
-    print("\n\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("测试完成!")
     print("=" * 60)
-    print("\n验证步骤:")
-    print("1. 公网行情WS应收到成交推送 (tradeId, executedPrice)")
-    print("2. K线应更新 (OHLC + 成交量)")
-    print("3. 做市账户应无任何成交/订单/持仓记录")
 
 
 if __name__ == "__main__":
