@@ -92,9 +92,24 @@ def mock_trade(account: dict, symbol_id: str, price: str, quantity: str, side: s
     )
 
     print(f"Status: {response.status_code}")
-    print(f"Response: {json.dumps(response.json(), indent=2, ensure_ascii=False)}")
-
-    return response.json()
+    
+    # 增强错误处理：打印原始响应内容
+    try:
+        response_data = response.json()
+        print(f"Response: {json.dumps(response_data, indent=2, ensure_ascii=False)}")
+        return response_data
+    except json.JSONDecodeError:
+        # 如果不是JSON，打印原始文本
+        print(f"Response (非JSON): {response.text}")
+        print(f"\n⚠️  错误分析:")
+        print(f"  - Status 401 通常表示认证失败")
+        print(f"  - 可能原因:")
+        print(f"    1. 时钟不同步 (需要NTP校时)")
+        print(f"    2. accessKey/secretKey 配置错误")
+        print(f"    3. 签名算法不匹配")
+        print(f"    4. 请求路径错误")
+        print(f"  - 当前时间戳: {int(time.time() * 1000)}")
+        return {"error": "JSONDecodeError", "raw_text": response.text, "status_code": response.status_code}
 
 
 def main():
@@ -106,13 +121,15 @@ def main():
     print(f"⚠️  时钟同步: ±30s 窗口, 务必 NTP 校时")
     print(f"⚠️  限频: 10/s/账户")
 
+    # 检查时钟同步
+    current_timestamp = int(time.time() * 1000)
+    print(f"\n当前时间戳: {current_timestamp}")
+    print(f"当前时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
     # ============ 现货测试 ============
     print("\n\n" + "=" * 60)
     print("【现货测试】BTC-USDT")
     print("=" * 60)
-
-    # 获取当前行情（简化，实际可用 WS 或 REST）
-    # 这里直接传入预期价格，实际会被价格保护钳制
 
     result = mock_trade(
         account=SPOT_ACCOUNT,
