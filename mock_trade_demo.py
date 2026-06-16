@@ -73,10 +73,11 @@ def mock_trade(account: dict, symbol_id: str, price: str, quantity: str, side: s
     }
 
     # 打印 curl 命令
+    access_key = account["accessKey"]
     curl_cmd = (
         f"curl -sS -X POST '{BASE_URL}{path}' "
         f"-H 'Content-Type: application/json' "
-        f"-H 'Decode-MM-Auth-Access-Key: {account[\"accessKey\"]}' "
+        f"-H 'Decode-MM-Auth-Access-Key: {access_key}' "
         f"-H 'Decode-MM-Auth-Timestamp: {ts}' "
         f"-H 'Decode-MM-Auth-Signature: {sig}' "
         f"-d '{json.dumps(body)}' "
@@ -93,23 +94,28 @@ def mock_trade(account: dict, symbol_id: str, price: str, quantity: str, side: s
     print(curl_cmd)
     print("-" * 60)
 
-    response = requests.post(
-        f"{BASE_URL}{path}",
-        headers=headers,
-        json=body,
-        verify=False,  # 内网证书
-        timeout=10
-    )
-
-    print(f"\nStatus: {response.status_code}")
-
     try:
-        response_data = response.json()
-        print(f"Response: {json.dumps(response_data, indent=2, ensure_ascii=False)}")
-        return response_data
-    except json.JSONDecodeError:
-        print(f"Response (非JSON): {response.text}")
-        return {"error": "JSONDecodeError", "raw_text": response.text, "status_code": response.status_code}
+        response = requests.post(
+            f"{BASE_URL}{path}",
+            headers=headers,
+            json=body,
+            verify=False,  # 内网证书
+            timeout=10
+        )
+
+        print(f"\nStatus: {response.status_code}")
+
+        try:
+            response_data = response.json()
+            print(f"Response: {json.dumps(response_data, indent=2, ensure_ascii=False)}")
+            return response_data
+        except json.JSONDecodeError:
+            print(f"Response (非JSON): {response.text}")
+            return {"error": "JSONDecodeError", "raw_text": response.text, "status_code": response.status_code}
+    except Exception as e:
+        print(f"\n⚠️  请求失败: {e}")
+        print(f"⚠️  请使用上方 CURL 命令在服务器上执行")
+        return {"error": str(e)}
 
 
 def main():
@@ -142,3 +148,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# cd t/home/ec2-user/tais/tais_test_demo & git pull & python3 mock_trade_demo.py
