@@ -427,8 +427,11 @@ class TestContractRealOrder:
         print("=" * 60)
 
     @pytest.mark.parametrize("price,side,position_side", [
-        ("420.00", "BUY", "LONG"),   # 买入做多
-        ("420.00", "SELL", "SHORT"),  # 卖出做空
+        ("420.00", "BUY", "LONG"),
+        ("420.00", "SELL", "SHORT"),
+    ], ids=[
+        "price_420_buy_LONG",
+        "price_420_sell_SHORT"
     ])
     def test_contract_order_with_price(self, contract_account, base_url, price, side, position_side):
         """
@@ -440,13 +443,13 @@ class TestContractRealOrder:
             python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s
             
             # 只运行买入
-            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "BUY"
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "buy_LONG"
             
             # 只运行卖出
-            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "SELL"
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "sell_SHORT"
             
-            # 指定特定价格(如430)
-            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "430"
+            # 指定特定价格(如420)
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "420"
         """
         print("\n" + "=" * 60)
         print(f"📌 测试合约下单 - 价格: {price}, 方向: {side}, 持仓方向: {position_side}")
