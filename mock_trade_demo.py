@@ -4,10 +4,11 @@ Mock Trade 做市对敲成交 Demo - pytest 格式
 接入入口: api.bifu.internal (做市商内网DNS)
 
 运行方式:
-    pytest mock_trade_demo.py -v
-    pytest mock_trade_demo.py -v -s  # 显示 print 输出
-    pytest mock_trade_demo.py -v -k "spot"  # 只运行现货测试
-    pytest mock_trade_demo.py -v -k "contract"  # 只运行合约测试
+    cd tais/tais_test_demo/ && git pull
+    pytest mock_trade_demo.py -vvvvv
+    pytest mock_trade_demo.py -vvvvv -s  # 显示 print 输出
+    pytest mock_trade_demo.py -vvvvv -k "spot"  # 只运行现货测试
+    pytest mock_trade_demo.py -vvvvv -k "contract"  # 只运行合约测试
 """
 
 import hashlib
@@ -265,7 +266,7 @@ class TestMockTrade:
 
         # 断言：检查返回结果
         assert "error" not in result, f"请求失败: {result.get('error')}"
-        assert result.get("statusCode") == 0, f"业务状态码错误: {result.get('statusCode')}"
+        assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
 
     def test_spot_mock_trade_sell(self, spot_account, base_url):
         """
@@ -282,7 +283,7 @@ class TestMockTrade:
         )
 
         assert "error" not in result, f"请求失败: {result.get('error')}"
-        assert result.get("statusCode") == 0, f"业务状态码错误: {result.get('statusCode')}"
+        assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
 
     def test_contract_mock_trade_buy(self, contract_account, base_url):
         """
@@ -299,7 +300,7 @@ class TestMockTrade:
         )
 
         assert "error" not in result, f"请求失败: {result.get('error')}"
-        assert result.get("statusCode") == 0, f"业务状态码错误: {result.get('statusCode')}"
+        assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
 
     def test_contract_mock_trade_sell(self, contract_account, base_url):
         """
@@ -316,7 +317,7 @@ class TestMockTrade:
         )
 
         assert "error" not in result, f"请求失败: {result.get('error')}"
-        assert result.get("statusCode") == 0, f"业务状态码错误: {result.get('statusCode')}"
+        assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
 
     def test_signature_generation(self):
         """测试签名生成是否正确"""
@@ -345,7 +346,7 @@ class TestContractRealOrder:
         )
 
         assert "error" not in result, f"请求失败: {result.get('error')}"
-        assert result.get("statusCode") == 0, f"业务状态码错误: {result.get('statusCode')}"
+        assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
 
     def test_contract_create_order_sell_short(self, contract_account, base_url):
         """
@@ -363,7 +364,7 @@ class TestContractRealOrder:
         )
 
         assert "error" not in result, f"请求失败: {result.get('error')}"
-        assert result.get("statusCode") == 0, f"业务状态码错误: {result.get('statusCode')}"
+        assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
 
 
 # ============ 便捷运行入口 ============
