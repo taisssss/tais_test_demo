@@ -330,6 +330,73 @@ class TestMockTrade:
         assert ts is not None and len(ts) > 0, "时间戳不能为空"
         assert sig is not None and len(sig) == 64, "签名长度应该为64位(hex)"
 
+    @pytest.mark.parametrize("price,side", [
+        ("400", "BUY"),
+        ("400", "SELL"),
+        ("410", "BUY"),
+        ("410", "SELL"),
+        ("420", "BUY"),
+        ("420", "SELL"),
+        ("430", "BUY"),
+        ("430", "SELL"),
+        ("440", "BUY"),
+        ("440", "SELL"),
+    ], ids=[
+        "p400_buy",
+        "p400_sell",
+        "p410_buy",
+        "p410_sell",
+        "p420_buy",
+        "p420_sell",
+        "p430_buy",
+        "p430_sell",
+        "p440_buy",
+        "p440_sell",
+    ])
+    def test_spot_order_with_price(self, spot_account, base_url, price, side):
+        """
+        测试现货成交 - 支持价格传参，方便单独调试
+        
+        运行示例:
+            # 运行所有参数组合
+            python3 -m pytest mock_trade_demo.py::TestMockTrade::test_spot_order_with_price -vvvvv -s
+            
+            # 只运行 420 价格的测试
+            python3 -m pytest mock_trade_demo.py::TestMockTrade::test_spot_order_with_price -vvvvv -s -k "p420"
+            
+            # 只运行所有卖出单
+            python3 -m pytest mock_trade_demo.py::TestMockTrade::test_spot_order_with_price -vvvvv -s -k "sell"
+            
+            # 同时指定价格和方向: 420 + 卖出
+            python3 -m pytest mock_trade_demo.py::TestMockTrade::test_spot_order_with_price -vvvvv -s -k "p420 and sell"
+        """
+        print("\n" + "=" * 60)
+        print(f"📌 测试现货成交 - 价格: {price}, 方向: {side}")
+        print("=" * 60)
+        
+        result = mock_trade(
+            account=spot_account,
+            symbol_id="90000013",
+            price=price,
+            quantity="0.100",
+            side=side,
+            is_spot=True
+        )
+
+        assert "error" not in result, f"请求失败: {result.get('error')}"
+        assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
+        
+        # 提取成交信息
+        data = result.get("data", {})
+        trade_id = data.get("tradeId", "N/A")
+        executed_price = data.get("executedPrice", price)
+        
+        print(f"\n✅ 现货成交成功!")
+        print(f"   tradeId: {trade_id}")
+        print(f"   价格: {executed_price}")
+        print(f"   方向: {side}")
+        print("=" * 60)
+
 
 class TestContractRealOrder:
     """合约成交测试类 - 使用 mock_trade 接口"""
@@ -458,8 +525,9 @@ class TestContractRealOrder:
             python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s
             
             # 只运行 420 价格的测试
-            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p420"
-            
+python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p430_buy"
+
+python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p430_sell"
             # 只运行 430 价格的测试
             python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p430"
             
