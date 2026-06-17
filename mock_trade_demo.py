@@ -5,7 +5,7 @@ Mock Trade 做市对敲成交 Demo - pytest 格式
 
 运行方式:
     cd tais/tais_test_demo/ && git pull
-    pytest mock_trade_demo.py -vvvvv
+    pytest mock_trade_demo.py -vvvvv -s
     pytest mock_trade_demo.py -vvvvv -s  # 显示 print 输出
     pytest mock_trade_demo.py -vvvvv -k "spot"  # 只运行现货测试
     pytest mock_trade_demo.py -vvvvv -k "contract"  # 只运行合约测试
@@ -365,6 +365,66 @@ class TestContractRealOrder:
 
         assert "error" not in result, f"请求失败: {result.get('error')}"
         assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
+
+    def test_contract_create_order_buy_then_sell(self, contract_account, base_url):
+        """
+        测试合约成交 - 先买入(400)再卖出(410)
+        symbol: BCHUSDT, contractId: 10000011
+        """
+        # 第一笔：买入做多，价格 400
+        print("\n" + "=" * 60)
+        print("📌 第一笔：买入做多 @ 400")
+        print("=" * 60)
+        
+        result1 = create_contract_order(
+            account=contract_account,
+            symbol="BCHUSDT",
+            contract_id="10000011",
+            price="410.00",
+            size="1.000",
+            side="BUY",
+            position_side="LONG"
+        )
+
+        assert "error" not in result1, f"第一笔买入失败: {result1.get('error')}"
+        assert result1.get("code") == "SUCCESS", f"第一笔买入业务状态码错误: {result1.get('code')}"
+        
+        # 提取第一笔成交信息
+        trade1 = result1.get("data", {})
+        trade1_id = trade1.get("tradeId", "N/A")
+        print(f"\n✅ 第一笔买入成交成功! tradeId: {trade1_id}")
+
+        # 第二笔：卖出做空，价格 410
+        print("\n" + "=" * 60)
+        print("📌 第二笔：卖出做空 @ 410")
+        print("=" * 60)
+        
+        result2 = create_contract_order(
+            account=contract_account,
+            symbol="BCHUSDT",
+            contract_id="10000011",
+            price="410.00",
+            size="1.000",
+            side="SELL",
+            position_side="SHORT"
+        )
+
+        assert "error" not in result2, f"第二笔卖出失败: {result2.get('error')}"
+        assert result2.get("code") == "SUCCESS", f"第二笔卖出业务状态码错误: {result2.get('code')}"
+        
+        # 提取第二笔成交信息
+        trade2 = result2.get("data", {})
+        trade2_id = trade2.get("tradeId", "N/A")
+        print(f"\n✅ 第二笔卖出成交成功! tradeId: {trade2_id}")
+
+        # 汇总
+        print("\n" + "=" * 60)
+        print("📊 合约成交汇总")
+        print("=" * 60)
+        print(f"第一笔买入: tradeId={trade1_id}, 价格=410, 方向=BUY/LONG")
+        print(f"第二笔卖出: tradeId={trade2_id}, 价格=410, 方向=SELL/SHORT")
+        print(f"预期收益: (410 - 410) * 1.000 = 1 USDT")
+        print("=" * 60)
 
 
 # ============ 便捷运行入口 ============
