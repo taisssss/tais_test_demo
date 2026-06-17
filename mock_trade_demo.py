@@ -427,6 +427,10 @@ class TestContractRealOrder:
         print("=" * 60)
 
     @pytest.mark.parametrize("price,side,position_side", [
+        ("400.00", "BUY", "LONG"),
+        ("400.00", "SELL", "SHORT"),
+        ("410.00", "BUY", "LONG"),
+        ("410.00", "SELL", "SHORT"),
         ("420.00", "BUY", "LONG"),
         ("420.00", "SELL", "SHORT"),
         ("430.00", "BUY", "LONG"),
@@ -434,6 +438,10 @@ class TestContractRealOrder:
         ("440.00", "BUY", "LONG"),
         ("440.00", "SELL", "SHORT"),
     ], ids=[
+        "p400_buy_LONG",
+        "p400_sell_SHORT",
+        "p410_buy_LONG",
+        "p410_sell_SHORT",
         "p420_buy_LONG",
         "p420_sell_SHORT",
         "p430_buy_LONG",
