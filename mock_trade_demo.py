@@ -2,6 +2,7 @@
 """
 Mock Trade 做市对敲成交 Demo - pytest 格式
 接入入口: api.bifu.internal (做市商内网DNS)
+注意：本文件所有请求都需要用mock_trade 方法
 
 运行方式:
     cd tais/tais_test_demo/ && git pull
@@ -328,62 +329,59 @@ class TestMockTrade:
 
 
 class TestContractRealOrder:
-    """合约真实下单测试类"""
+    """合约成交测试类 - 使用 mock_trade 接口"""
 
-    def test_contract_create_order_buy_long(self, contract_account, base_url):
+    def test_contract_mock_trade_buy_long(self, contract_account, base_url):
         """
-        测试合约真实下单 - 买入做多
-        symbol: BCHUSDT, contractId: 10000011
+        测试合约成交 - 买入做多
+        symbol: BCH/USDT (90000013)
         """
-        result = create_contract_order(
+        result = mock_trade(
             account=contract_account,
-            symbol="BCHUSDT",
-            contract_id="10000011",
-            price="400.00",
-            size="1.000",
+            symbol_id="90000013",
+            price="400",
+            quantity="1.000",
             side="BUY",
-            position_side="LONG"
+            is_spot=False
         )
 
         assert "error" not in result, f"请求失败: {result.get('error')}"
         assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
 
-    def test_contract_create_order_sell_short(self, contract_account, base_url):
+    def test_contract_mock_trade_sell_short(self, contract_account, base_url):
         """
-        测试合约真实下单 - 卖出做空
-        symbol: BCHUSDT, contractId: 10000011
+        测试合约成交 - 卖出做空
+        symbol: BCH/USDT (90000013)
         """
-        result = create_contract_order(
+        result = mock_trade(
             account=contract_account,
-            symbol="BCHUSDT",
-            contract_id="10000011",
-            price="400.00",
-            size="1.000",
+            symbol_id="90000013",
+            price="400",
+            quantity="1.000",
             side="SELL",
-            position_side="SHORT"
+            is_spot=False
         )
 
         assert "error" not in result, f"请求失败: {result.get('error')}"
         assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
 
-    def test_contract_create_order_buy_then_sell(self, contract_account, base_url):
+    def test_contract_mock_trade_buy_then_sell(self, contract_account, base_url):
         """
         测试合约成交 - 先买入(400)再卖出(410)
-        symbol: BCHUSDT, contractId: 10000011
+        symbol: BCH/USDT (90000013)
         """
-        # 第一笔：买入做多，价格 400
+        # 第一笔：买入，价格 400
         print("\n" + "=" * 60)
-        print("📌 第一笔：买入做多 @ 400")
+        print("📌 第一笔：买入 @ 400")
         print("=" * 60)
         
-        result1 = create_contract_order(
+        result1 = mock_trade(
             account=contract_account,
-            symbol="BCHUSDT",
-            contract_id="10000011",
-            price="400.00",
-            size="1.000",
+            symbol_id="90000013",
+            price="400",
+            quantity="1.000",
             side="BUY",
-            position_side="LONG"
+            is_spot=False
         )
 
         assert "error" not in result1, f"第一笔买入失败: {result1.get('error')}"
@@ -394,19 +392,18 @@ class TestContractRealOrder:
         trade1_id = trade1.get("tradeId", "N/A")
         print(f"\n✅ 第一笔买入成交成功! tradeId: {trade1_id}")
 
-        # 第二笔：卖出做空，价格 410
+        # 第二笔：卖出，价格 410
         print("\n" + "=" * 60)
-        print("📌 第二笔：卖出做空 @ 410")
+        print("📌 第二笔：卖出 @ 410")
         print("=" * 60)
         
-        result2 = create_contract_order(
+        result2 = mock_trade(
             account=contract_account,
-            symbol="BCHUSDT",
-            contract_id="10000011",
-            price="410.00",
-            size="1.000",
+            symbol_id="90000013",
+            price="410",
+            quantity="1.000",
             side="SELL",
-            position_side="SHORT"
+            is_spot=False
         )
 
         assert "error" not in result2, f"第二笔卖出失败: {result2.get('error')}"
@@ -421,37 +418,37 @@ class TestContractRealOrder:
         print("\n" + "=" * 60)
         print("📊 合约成交汇总")
         print("=" * 60)
-        print(f"第一笔买入: tradeId={trade1_id}, 价格=400, 方向=BUY/LONG")
-        print(f"第二笔卖出: tradeId={trade2_id}, 价格=410, 方向=SELL/SHORT")
+        print(f"第一笔买入: tradeId={trade1_id}, 价格=400, 方向=BUY")
+        print(f"第二笔卖出: tradeId={trade2_id}, 价格=410, 方向=SELL")
         print(f"预期收益: (410 - 400) * 1.000 = 10 USDT")
         print("=" * 60)
 
-    @pytest.mark.parametrize("price,side,position_side", [
-        ("400.00", "BUY", "LONG"),
-        ("400.00", "SELL", "SHORT"),
-        ("410.00", "BUY", "LONG"),
-        ("410.00", "SELL", "SHORT"),
-        ("420.00", "BUY", "LONG"),
-        ("420.00", "SELL", "SHORT"),
-        ("430.00", "BUY", "LONG"),
-        ("430.00", "SELL", "SHORT"),
-        ("440.00", "BUY", "LONG"),
-        ("440.00", "SELL", "SHORT"),
+    @pytest.mark.parametrize("price,side", [
+        ("400", "BUY"),
+        ("400", "SELL"),
+        ("410", "BUY"),
+        ("410", "SELL"),
+        ("420", "BUY"),
+        ("420", "SELL"),
+        ("430", "BUY"),
+        ("430", "SELL"),
+        ("440", "BUY"),
+        ("440", "SELL"),
     ], ids=[
-        "p400_buy_LONG",
-        "p400_sell_SHORT",
-        "p410_buy_LONG",
-        "p410_sell_SHORT",
-        "p420_buy_LONG",
-        "p420_sell_SHORT",
-        "p430_buy_LONG",
-        "p430_sell_SHORT",
-        "p440_buy_LONG",
-        "p440_sell_SHORT",
+        "p400_buy",
+        "p400_sell",
+        "p410_buy",
+        "p410_sell",
+        "p420_buy",
+        "p420_sell",
+        "p430_buy",
+        "p430_sell",
+        "p440_buy",
+        "p440_sell",
     ])
-    def test_contract_order_with_price(self, contract_account, base_url, price, side, position_side):
+    def test_contract_order_with_price(self, contract_account, base_url, price, side):
         """
-        测试合约下单 - 支持价格传参，方便单独调试
+        测试合约成交 - 支持价格传参，方便单独调试
         
         运行示例:
             # 运行所有参数组合
@@ -464,26 +461,25 @@ class TestContractRealOrder:
             python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p430"
             
             # 只运行所有卖出单
-            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "sell_SHORT"
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "sell"
             
             # 同时指定价格和方向: 430 + 卖出
-            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p430 and sell_SHORT"
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p430 and sell"
             
             # 指定价格 420 的所有测试
             python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p420"
         """
         print("\n" + "=" * 60)
-        print(f"📌 测试合约下单 - 价格: {price}, 方向: {side}, 持仓方向: {position_side}")
+        print(f"📌 测试合约成交 - 价格: {price}, 方向: {side}")
         print("=" * 60)
         
-        result = create_contract_order(
+        result = mock_trade(
             account=contract_account,
-            symbol="BCHUSDT",
-            contract_id="10000011",
+            symbol_id="90000013",
             price=price,
-            size="1.000",
+            quantity="1.000",
             side=side,
-            position_side=position_side
+            is_spot=False
         )
 
         assert "error" not in result, f"请求失败: {result.get('error')}"
@@ -494,10 +490,10 @@ class TestContractRealOrder:
         trade_id = data.get("tradeId", "N/A")
         executed_price = data.get("executedPrice", price)
         
-        print(f"\n✅ 合约下单成交成功!")
+        print(f"\n✅ 合约成交成功!")
         print(f"   tradeId: {trade_id}")
         print(f"   价格: {executed_price}")
-        print(f"   方向: {side}/{position_side}")
+        print(f"   方向: {side}")
         print("=" * 60)
 
 
