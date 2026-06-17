@@ -380,7 +380,7 @@ class TestContractRealOrder:
             account=contract_account,
             symbol="BCHUSDT",
             contract_id="10000011",
-            price="410.00",
+            price="400.00",
             size="1.000",
             side="BUY",
             position_side="LONG"
@@ -421,9 +421,59 @@ class TestContractRealOrder:
         print("\n" + "=" * 60)
         print("📊 合约成交汇总")
         print("=" * 60)
-        print(f"第一笔买入: tradeId={trade1_id}, 价格=410, 方向=BUY/LONG")
+        print(f"第一笔买入: tradeId={trade1_id}, 价格=400, 方向=BUY/LONG")
         print(f"第二笔卖出: tradeId={trade2_id}, 价格=410, 方向=SELL/SHORT")
-        print(f"预期收益: (410 - 410) * 1.000 = 1 USDT")
+        print(f"预期收益: (410 - 400) * 1.000 = 10 USDT")
+        print("=" * 60)
+
+    @pytest.mark.parametrize("price,side,position_side", [
+        ("420.00", "BUY", "LONG"),   # 买入做多
+        ("420.00", "SELL", "SHORT"),  # 卖出做空
+    ])
+    def test_contract_order_with_price(self, contract_account, base_url, price, side, position_side):
+        """
+        测试合约下单 - 支持价格传参，方便单独调试
+        默认成交价格: 420
+        
+        运行示例:
+            # 运行所有参数组合
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s
+            
+            # 只运行买入
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "BUY"
+            
+            # 只运行卖出
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "SELL"
+            
+            # 指定特定价格(如430)
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "430"
+        """
+        print("\n" + "=" * 60)
+        print(f"📌 测试合约下单 - 价格: {price}, 方向: {side}, 持仓方向: {position_side}")
+        print("=" * 60)
+        
+        result = create_contract_order(
+            account=contract_account,
+            symbol="BCHUSDT",
+            contract_id="10000011",
+            price=price,
+            size="1.000",
+            side=side,
+            position_side=position_side
+        )
+
+        assert "error" not in result, f"请求失败: {result.get('error')}"
+        assert result.get("code") == "SUCCESS", f"业务状态码错误: {result.get('code')}"
+        
+        # 提取成交信息
+        data = result.get("data", {})
+        trade_id = data.get("tradeId", "N/A")
+        executed_price = data.get("executedPrice", price)
+        
+        print(f"\n✅ 合约下单成交成功!")
+        print(f"   tradeId: {trade_id}")
+        print(f"   价格: {executed_price}")
+        print(f"   方向: {side}/{position_side}")
         print("=" * 60)
 
 
