@@ -2,12 +2,15 @@
 """
 Mock Trade 做市对敲成交 Demo - pytest 格式
 接入入口: api.bifu.internal (做市商内网DNS)
-注意：本文件所有请求都需要用mock_trade 方法
+注意：本文件所有请求都需要用 mock_trade 方法
+
+Symbol ID:
+  - 现货: BCH/USDT -> 90000013
+  - 合约: BCH/USDT -> 10000011
 
 运行方式:
     cd tais/tais_test_demo/ && git pull
     pytest mock_trade_demo.py -vvvvv -s
-    pytest mock_trade_demo.py -vvvvv -s  # 显示 print 输出
     pytest mock_trade_demo.py -vvvvv -k "spot"  # 只运行现货测试
     pytest mock_trade_demo.py -vvvvv -k "contract"  # 只运行合约测试
 """
@@ -289,11 +292,11 @@ class TestMockTrade:
     def test_contract_mock_trade_buy(self, contract_account, base_url):
         """
         测试合约买入
-        symbol: BCH/USDT
+        symbol: BCH/USDT (10000011)
         """
         result = mock_trade(
             account=contract_account,
-            symbol_id="90000013",
+            symbol_id="10000011",
             price="400",
             quantity="0.100",
             side="BUY",
@@ -306,11 +309,11 @@ class TestMockTrade:
     def test_contract_mock_trade_sell(self, contract_account, base_url):
         """
         测试合约卖出
-        symbol: BCH/USDT
+        symbol: BCH/USDT (10000011)
         """
         result = mock_trade(
             account=contract_account,
-            symbol_id="90000013",
+            symbol_id="10000011",
             price="400",
             quantity="0.100",
             side="SELL",
@@ -334,11 +337,11 @@ class TestContractRealOrder:
     def test_contract_mock_trade_buy_long(self, contract_account, base_url):
         """
         测试合约成交 - 买入做多
-        symbol: BCH/USDT (90000013)
+        symbol: BCH/USDT (10000011)
         """
         result = mock_trade(
             account=contract_account,
-            symbol_id="90000013",
+            symbol_id="10000011",
             price="400",
             quantity="1.000",
             side="BUY",
@@ -351,11 +354,11 @@ class TestContractRealOrder:
     def test_contract_mock_trade_sell_short(self, contract_account, base_url):
         """
         测试合约成交 - 卖出做空
-        symbol: BCH/USDT (90000013)
+        symbol: BCH/USDT (10000011)
         """
         result = mock_trade(
             account=contract_account,
-            symbol_id="90000013",
+            symbol_id="10000011",
             price="400",
             quantity="1.000",
             side="SELL",
@@ -368,7 +371,7 @@ class TestContractRealOrder:
     def test_contract_mock_trade_buy_then_sell(self, contract_account, base_url):
         """
         测试合约成交 - 先买入(400)再卖出(410)
-        symbol: BCH/USDT (90000013)
+        symbol: BCH/USDT (10000011)
         """
         # 第一笔：买入，价格 400
         print("\n" + "=" * 60)
@@ -377,7 +380,7 @@ class TestContractRealOrder:
         
         result1 = mock_trade(
             account=contract_account,
-            symbol_id="90000013",
+            symbol_id="10000011",
             price="400",
             quantity="1.000",
             side="BUY",
@@ -399,7 +402,7 @@ class TestContractRealOrder:
         
         result2 = mock_trade(
             account=contract_account,
-            symbol_id="90000013",
+            symbol_id="10000011",
             price="410",
             quantity="1.000",
             side="SELL",
@@ -475,7 +478,7 @@ class TestContractRealOrder:
         
         result = mock_trade(
             account=contract_account,
-            symbol_id="90000013",
+            symbol_id="10000011",
             price=price,
             quantity="1.000",
             side=side,
