@@ -429,27 +429,40 @@ class TestContractRealOrder:
     @pytest.mark.parametrize("price,side,position_side", [
         ("420.00", "BUY", "LONG"),
         ("420.00", "SELL", "SHORT"),
+        ("430.00", "BUY", "LONG"),
+        ("430.00", "SELL", "SHORT"),
+        ("440.00", "BUY", "LONG"),
+        ("440.00", "SELL", "SHORT"),
     ], ids=[
-        "price_420_buy_LONG",
-        "price_420_sell_SHORT"
+        "p420_buy_LONG",
+        "p420_sell_SHORT",
+        "p430_buy_LONG",
+        "p430_sell_SHORT",
+        "p440_buy_LONG",
+        "p440_sell_SHORT",
     ])
     def test_contract_order_with_price(self, contract_account, base_url, price, side, position_side):
         """
         测试合约下单 - 支持价格传参，方便单独调试
-        默认成交价格: 420
         
         运行示例:
             # 运行所有参数组合
             python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s
             
-            # 只运行买入
-            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "buy_LONG"
+            # 只运行 420 价格的测试
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p420"
             
-            # 只运行卖出
+            # 只运行 430 价格的测试
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p430"
+            
+            # 只运行所有卖出单
             python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "sell_SHORT"
             
-            # 指定特定价格(如420)
-            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "420"
+            # 同时指定价格和方向: 430 + 卖出
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p430 and sell_SHORT"
+            
+            # 指定价格 420 的所有测试
+            python3 -m pytest mock_trade_demo.py::TestContractRealOrder::test_contract_order_with_price -vvvvv -s -k "p420"
         """
         print("\n" + "=" * 60)
         print(f"📌 测试合约下单 - 价格: {price}, 方向: {side}, 持仓方向: {position_side}")
